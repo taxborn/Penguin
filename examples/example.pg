@@ -1,0 +1,30 @@
+// Single line comments
+
+/*
+ * Multiline comments
+ */
+
+import std.print;
+
+a := 5;
+a : i32 = 5;
+a : u32 = 5;
+
+@func foo() : main = {
+    a : u32 = 34;
+    b : u32 = 35;
+    c := @bar(a, b);
+};
+
+@func bar(a : u32 , b : u32) : u32 = {
+    std.@print("Adding a and b.");
+    return a + b;
+};
+
+
+@func bar(a : u32 , b : u32) : u32 = (
+    // Print something
+    (@print ("WOO"))
+
+    (@bar
+)
