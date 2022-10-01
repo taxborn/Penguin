@@ -6,9 +6,9 @@
 
 import std.print;
 
-a := 5;
-a : i32 = 5;
-a : u32 = 5;
+let a := 5;
+let a : i32 = 5;
+let a : u32 = 5;
 
 @func foo() : main = {
     a : u32 = 34;
