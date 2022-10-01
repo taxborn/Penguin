@@ -3,6 +3,7 @@ use std::fs;
 #[derive(Debug)]
 pub enum LexerError {
     InvalidCharacter(char),
+    InvalidIdentifier(String),
     UnexpectedEOF,
 }
 
@@ -121,8 +122,8 @@ impl Lexer {
                         }
                     }
 
-                    if buffer == "let" || buffer == "var" {
-                        tokens.push(Token::new(TokenKind::Assign, buffer));
+                    if let Some(kind) = Lexer::identify(&buffer) {
+                        tokens.push(Token::new(kind, buffer));
                     } else {
                         tokens.push(Token::new(TokenKind::Identifier, buffer));
                     }
@@ -143,5 +144,12 @@ impl Lexer {
 
     fn current_char(&self) -> Option<char> {
         self.source.get(self.loc).cloned()
+    }
+
+    fn identify(buffer: &String) -> Option<TokenKind> {
+        match buffer.as_str() {
+            "let" | "var" => Some(TokenKind::String),
+            _ => None,
+        }
     }
 }
