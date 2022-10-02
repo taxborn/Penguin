@@ -14,7 +14,7 @@ enum TokenKind {
     UnTypedAssignment,       // :=
     SemiColon,               // ;
     Identifier,
-    Assign, // let
+    Assign,                  // let
     String,
 
     Number(usize),
@@ -283,7 +283,7 @@ impl Lexer {
         self.loc += 1;
     }
 
-    fn identify(buffer: &String) -> Option<TokenKind> {
+    fn identify(buffer: &str) -> Option<TokenKind> {
         // Change the buffer to lowercase to make it easier to compare
         let buffer = buffer.to_lowercase();
 
