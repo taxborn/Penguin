@@ -1,1 +1,1 @@
-let a := "PLEASE COMPILE\"";
+let a := '5';
