@@ -1,9 +1,8 @@
 use std::fs;
-
-#[derive(Debug)]
-pub enum LexerError {
+#[derive(Debug)] pub enum LexerError {
     InvalidCharacter(char),
     InvalidIdentifier(String),
+    InvalidEscapeSequence(char),
     UnexpectedEOF,
 }
 
@@ -32,6 +31,8 @@ impl Token {
 #[derive(Debug)]
 pub struct Lexer {
     source: Vec<char>,
+    // TODO: Make this it's own structure to allow for multiple files
+    // and line numbers to be tracked
     loc: usize
 }
 
@@ -61,7 +62,7 @@ impl Lexer {
                 ':' => {
                     tokens.push(Token::new(TokenKind::TypeAssignment, current.to_string()));
 
-                    self.loc += 1;
+                    self.next(); 
 
                     if let Some(next) = self.current_char() {
                         if next == '=' {
@@ -72,51 +73,70 @@ impl Lexer {
                             tokens.push(Token::new(TokenKind::UnTypedAssignment, ":=".to_string()));
 
                             // Increment the location
-                            self.loc += 1;
+                            self.next();
                         }
                     } else {
                         return Err(LexerError::UnexpectedEOF);
                     };
 
-                    self.loc += 1;
+                    self.next();
                 },
                 '=' => {
                     tokens.push(Token::new(TokenKind::LetAssignment, current.to_string()));
 
-                    self.loc += 1;
+                    self.next();
                 },
                 ';' => {
                     tokens.push(Token::new(TokenKind::SemiColon, current.to_string()));
 
-                    self.loc += 1;
+                    self.next();
                 },
                 '\'' | '"' => {
                     let mut buffer = String::new();
 
-                    self.loc += 1;
+                    self.next();
 
                     while let Some(c) = self.current_char() {
                         if c == '\'' || c == '"' {
                             break;
                         }
 
-                        buffer.push(c);
+                        if c == '\\' {
+                            self.next();
+                            self.next();
 
-                        self.loc += 1;
+                            if let Some(c) = self.current_char() {
+                                match c {
+                                    '"' => buffer.push('"'),
+                                    _ => return Err(LexerError::InvalidEscapeSequence(c))
+                                }
+                                break;
+                            } else {
+                                return Err(LexerError::UnexpectedEOF);
+                            }
+                        }
+
+                        if let Some(cur) = self.current_char() {
+                            buffer.push(cur);
+                        } else {
+                            return Err(LexerError::UnexpectedEOF);
+                        }
+
+                        self.next();
                     }
 
                     tokens.push(Token::new(TokenKind::String, buffer));
 
-                    self.loc += 1;
+                    self.next();
                 },
                 _ if current.is_alphabetic() => {
                     let mut buffer = String::new();
 
-                    while let Some(c) = self.current_char() {
-                        if c.is_alphanumeric() {
-                            buffer.push(c);
+                    while let Some(cur) = self.current_char() {
+                        if cur.is_alphanumeric() {
+                            buffer.push(cur);
 
-                            self.loc += 1;
+                            self.next();
                         } else {
                             break;
                         }
@@ -128,10 +148,10 @@ impl Lexer {
                         tokens.push(Token::new(TokenKind::Identifier, buffer));
                     }
 
-                    self.loc += 1;
+                    self.next();
                 },
                 _ if current.is_whitespace() => {
-                    self.loc += 1;
+                    self.next();
                 },
                 _ => {
                     return Err(LexerError::InvalidCharacter(current));
@@ -144,6 +164,10 @@ impl Lexer {
 
     fn current_char(&self) -> Option<char> {
         self.source.get(self.loc).cloned()
+    }
+    
+    fn next(&mut self) {
+        self.loc += 1;
     }
 
     fn identify(buffer: &String) -> Option<TokenKind> {
