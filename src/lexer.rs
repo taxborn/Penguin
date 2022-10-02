@@ -8,7 +8,7 @@
 #[derive(Clone, Debug, PartialEq)]
 enum TokenKind {
     TypeAssignment, // :
-    Whitespace,     // \s+
+    TypedAssignment(String), // : u32 =
     LetAssignment, // =
     UnTypedAssignment, // :=
     SemiColon, // ;
@@ -73,36 +73,10 @@ impl Lexer {
                             tokens.pop();
 
                             tokens.push(Token::new(TokenKind::UnTypedAssignment, ":=".to_string()));
-
-                            self.next();
-                            continue;
+                        } else {
+                            tokens.push(Token::new(TokenKind::LetAssignment, current.to_string()));
                         }
                     }
-
-                    // Check if the previous two tokens are let and a whitespace
-                    // If so, this is a let assignment
-                    if tokens.len() >= 2 {
-                        let last_two = tokens[tokens.len() - 2..].to_vec();
-
-                        let second_last = last_two[0].clone();
-                        let last = last_two[1].clone();
-
-                        // Check if the last two tokens are a let and a whitespace,
-                        // if so, this is an UnTypedAssignment
-                        if last.kind == TokenKind::Whitespace && second_last.kind == TokenKind::TypeAssignment {
-                            // Pop the last two tokens
-                            tokens.pop();
-                            tokens.pop();
-
-                            // Push an untyped assignment
-                            tokens.push(Token::new(TokenKind::UnTypedAssignment, ":=".to_string()));
-
-                            self.next();
-                            continue;
-                        }
-                    }
-
-                    tokens.push(Token::new(TokenKind::LetAssignment, current.to_string()));
 
                     self.next();
                 },
@@ -134,7 +108,8 @@ impl Lexer {
                 _ if current.is_alphabetic() => {
                     let mut buffer = String::new();
 
-                    while let Some(cur) = self.current_char() { if cur.is_alphanumeric() {
+                    while let Some(cur) = self.current_char() { 
+                        if cur.is_alphanumeric() {
                             buffer.push(cur);
 
                             self.next();
@@ -151,16 +126,6 @@ impl Lexer {
                 },
                 _ if current.is_whitespace() => {
                     self.next();
-
-                    while let Some(cur) = self.current_char() {
-                        if cur.is_whitespace() {
-                            self.next();
-                        } else {
-                            break;
-                        }
-                    }
-
-                    tokens.push(Token::new(TokenKind::Whitespace, " ".to_string()));
                 },
                 _ => {
                     return Err(LexerError::InvalidCharacter(current));
@@ -181,7 +146,7 @@ impl Lexer {
 
     fn identify(buffer: &String) -> Option<TokenKind> {
         match buffer.as_str() {
-            "let" | "var" => Some(TokenKind::Assign),
+            "let" => Some(TokenKind::Assign),
             _ => None,
         }
     }
@@ -196,13 +161,9 @@ mod tests {
         let mut lexer = Lexer::new(":=".to_string());
         let tokens = lexer.lex().unwrap();
 
-        assert_eq!(tokens.len(), 1);
+        let expected = vec![Token::new(TokenKind::UnTypedAssignment, ":=".to_string())];
 
-        let token = &tokens[0];
-
-        println!("{:?}", token);
-
-        assert_eq!(token.kind, TokenKind::UnTypedAssignment);
+        assert_eq!(tokens, expected);
     }
 
     #[test]
@@ -210,11 +171,9 @@ mod tests {
         let mut lexer = Lexer::new(": =".to_string());
         let tokens = lexer.lex().unwrap();
 
-        assert_eq!(tokens.len(), 1);
+        let expected = vec![Token::new(TokenKind::UnTypedAssignment, ":=".to_string())];
 
-        let token = &tokens[0];
-
-        assert_eq!(token.kind, TokenKind::UnTypedAssignment);
+        assert_eq!(tokens, expected);
     }
 
     #[test]
@@ -226,9 +185,7 @@ mod tests {
         // E.g TokenKind::TypedAssignment("u32"), or would that be done in the parser?
         let expected = vec![
             Token::new(TokenKind::TypeAssignment, ":".to_string()),
-            Token::new(TokenKind::Whitespace, " ".to_string()),
             Token::new(TokenKind::Identifier, "u32".to_string()),
-            Token::new(TokenKind::Whitespace, " ".to_string()),
             Token::new(TokenKind::LetAssignment, "=".to_string())
         ];
 
@@ -240,14 +197,13 @@ mod tests {
         let mut lexer = Lexer::new("let x : = 'hello world';".to_string());
         let tokens = lexer.lex().unwrap();
 
-        let expected_tokens = vec![Token::new(TokenKind::Assign, "let".to_string()),
-                                   Token::new(TokenKind::Whitespace, " ".to_string()),
-                                   Token::new(TokenKind::Identifier, "x".to_string()),
-                                   Token::new(TokenKind::Whitespace, " ".to_string()),
-                                   Token::new(TokenKind::UnTypedAssignment, ":=".to_string()),
-                                   Token::new(TokenKind::Whitespace, " ".to_string()),
-                                   Token::new(TokenKind::String, "hello world".to_string()),
-                                   Token::new(TokenKind::SemiColon, ";".to_string())];
+        let expected_tokens = vec![
+            Token::new(TokenKind::Assign, "let".to_string()),
+           Token::new(TokenKind::Identifier, "x".to_string()),
+           Token::new(TokenKind::UnTypedAssignment, ":=".to_string()),
+           Token::new(TokenKind::String, "hello world".to_string()),
+           Token::new(TokenKind::SemiColon, ";".to_string())
+        ];
 
         assert_eq!(tokens, expected_tokens);
     }
