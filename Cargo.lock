@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "test-compiler"
+name = "penguin"
 version = "0.1.0"
