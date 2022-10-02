@@ -94,12 +94,27 @@ impl Lexer {
                             break;
                         }
 
-                        buffer.push(c);
+                        if c == '\\' {
+                            self.next();
+
+                            if let Some(c) = self.current_char() {
+                                match c {
+                                    'n' => buffer.push('\n'),
+                                    't' => buffer.push('\t'),
+                                    'r' => buffer.push('\r'),
+                                    '0' => buffer.push('\0'),
+                                    '"' => buffer.push('"'),
+                                    '\'' => buffer.push('\''),
+                                    _ => return Err(LexerError::InvalidEscapeSequence(c))
+                                }
+                            }
+                        } else {
+                            buffer.push(c);
+                        }
+
 
                         self.next();
                     }
-
-                    println!("String: {}", buffer);
 
                     tokens.push(Token::new(TokenKind::String, buffer));
 
@@ -194,7 +209,7 @@ mod tests {
 
     #[test]
     fn lex_variable_assignment_to_string() {
-        let mut lexer = Lexer::new("let x : = 'hello world';".to_string());
+        let mut lexer = Lexer::new("let x : = \"hello world\";".to_string());
         let tokens = lexer.lex().unwrap();
 
         let expected_tokens = vec![
@@ -206,5 +221,15 @@ mod tests {
         ];
 
         assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn test_escape_sequences() {
+        let mut lexer = Lexer::new("'Don\\'t'".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![Token::new(TokenKind::String, "Don't".to_string())];
+
+        assert_eq!(tokens, expected);
     }
 }
