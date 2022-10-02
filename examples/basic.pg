@@ -1,1 +1,2 @@
 let a : u32 = "This is a \n test";
+let b := 5 + 10;

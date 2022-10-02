@@ -1,4 +1,5 @@
-#[derive(Debug)] pub enum LexerError {
+#[derive(Debug)]
+pub enum LexerError {
     InvalidCharacter(char),
     InvalidIdentifier(String),
     InvalidEscapeSequence(char),
@@ -15,6 +16,15 @@ enum TokenKind {
     Identifier,
     Assign, // let
     String,
+
+    Number(usize),
+
+    // Arithmetic
+    Plus, // +
+    Minus, // -
+    Multiply, // *
+    Divide, // /
+    Modulo, // %
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -104,6 +114,7 @@ impl Lexer {
                                     'r' => buffer.push('\r'),
                                     '0' => buffer.push('\0'),
                                     '"' => buffer.push('"'),
+                                    '\\' => buffer.push('\\'),
                                     '\'' => buffer.push('\''),
                                     _ => return Err(LexerError::InvalidEscapeSequence(c))
                                 }
@@ -111,7 +122,6 @@ impl Lexer {
                         } else {
                             buffer.push(c);
                         }
-
 
                         self.next();
                     }
@@ -138,6 +148,45 @@ impl Lexer {
                     } else {
                         tokens.push(Token::new(TokenKind::Identifier, buffer));
                     }
+                },
+                _ if current.is_numeric() => {
+                    let mut buffer = String::new();
+
+                    while let Some(cur) = self.current_char() {
+                        if cur.is_numeric() {
+                            buffer.push(cur);
+
+                            self.next();
+                        } else {
+                            break;
+                        }
+                    }
+
+                    tokens.push(Token::new(TokenKind::Number(buffer.parse::<usize>().unwrap()), buffer));
+                },
+                '+' => {
+                    tokens.push(Token::new(TokenKind::Plus, current.to_string()));
+
+                    self.next();
+                },
+                '-' => {
+                    tokens.push(Token::new(TokenKind::Minus, current.to_string()));
+
+                    self.next();
+                },
+                '*' => {
+                    tokens.push(Token::new(TokenKind::Multiply, current.to_string()));
+                    self.next();
+                },
+                '/' => {
+                    tokens.push(Token::new(TokenKind::Divide, current.to_string()));
+
+                    self.next();
+                },
+                '%' => {
+                    tokens.push(Token::new(TokenKind::Modulo, current.to_string()));
+
+                    self.next();
                 },
                 _ if current.is_whitespace() => {
                     self.next();
@@ -231,5 +280,42 @@ mod tests {
         let expected = vec![Token::new(TokenKind::String, "Don't".to_string())];
 
         assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_string_with_escaped_quotes() {
+        let mut lexer = Lexer::new("\"\\\"hello\\\"\"".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![Token::new(TokenKind::String, "\"hello\"".to_string())];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_string_with_escaped_backslash() {
+        let mut lexer = Lexer::new("\"\\\\hello\\\\\"".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![Token::new(TokenKind::String, "\\hello\\".to_string())];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_number() {
+        let mut lexer = Lexer::new("123".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![Token::new(TokenKind::Number(123), "123".to_string())];
+
+        assert_eq!(tokens, expected);
+        
+        let number = match tokens[0].kind {
+            TokenKind::Number(n) => n,
+            _ => panic!("Expected a number token")
+        };
+
+        assert_eq!(number, 123);
     }
 }
