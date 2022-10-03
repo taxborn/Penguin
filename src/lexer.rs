@@ -14,7 +14,7 @@ enum TokenKind {
     UnTypedAssignment,       // :=
     SemiColon,               // ;
     Identifier,
-    Assign,                  // let
+    Assign, // let
     String,
 
     Number(usize),
@@ -199,6 +199,8 @@ impl Lexer {
 
                     self.next();
                 }
+                // Identifiers start with a letter (underscore in the future)
+                // and can contain numbers.
                 _ if current.is_alphabetic() => {
                     let mut buffer = String::new();
 
@@ -218,23 +220,24 @@ impl Lexer {
                         tokens.push(Token::new(TokenKind::Identifier, buffer));
                     }
                 }
+                // TODO: Add support for floats
                 _ if current.is_numeric() => {
                     let mut buffer = String::new();
 
                     while let Some(cur) = self.current_char() {
-                        // Should we push the '_' into the buffer?
-                        if cur.is_numeric() {
+                        // Check if the current character is a number or an
+                        // underscore. Underscores are used to make numbers
+                        // more readable, for example, 1_000_000.
+                        if cur.is_numeric() || cur == '_' {
                             buffer.push(cur);
 
-                            self.next();
-                        } else if cur == '_' {
                             self.next();
                         } else {
                             break;
                         }
                     }
 
-                    let num = buffer.parse::<usize>().unwrap();
+                    let num = buffer.replace("_", "").parse::<usize>().unwrap();
 
                     tokens.push(Token::new(TokenKind::Number(num), buffer));
                 }
@@ -422,7 +425,7 @@ mod tests {
         let mut lexer = Lexer::new("1_000".to_string());
         let tokens = lexer.lex().unwrap();
 
-        let expected = vec![Token::new(TokenKind::Number(1000), "1000".to_string())];
+        let expected = vec![Token::new(TokenKind::Number(1000), "1_000".to_string())];
 
         assert_eq!(tokens, expected);
     }
