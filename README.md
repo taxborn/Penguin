@@ -44,20 +44,20 @@ var b : f64 = 5.001;
 ```
 
 ### Functions:
-Functions start with `@func`, followed by the name of the function, and then followed by the parameters. It is then assigned (notice the walrus `:=` operator here, it's also used by variables) to a body. Functions **must** be typed.
+Functions start with `func`, followed by the name of the function, and then followed by the parameters. It is then assigned (notice the walrus `:=` operator here, it's also used by variables) to a body. Functions **must** be typed.
 
-`@func main()` is special since it is the entrypoint of your program.
+`func main()` is special since it is the entrypoint of your program.
 
 **Main:**
 ```
-@func main() := {
+func main() := {
     // ...
 }:
 ```
 
 **User defined function (typed):**
 ```
-@func add_two(a : u32, b : u32) : u32 = {
+func add_two(a : u32, b : u32) : u32 = {
     // ...
 }:
 ```
@@ -66,18 +66,18 @@ Functions start with `@func`, followed by the name of the function, and then fol
 ```
 import std;
 
-@func main() := {
+func main() := {
     // ... 
-	std.@print(c);
+	std.print(c);
 };
 ```
 Or
 ```
 import std.print;
 
-@func main() := {
+func main() := {
     // ...
-	@print(c);
+	print(c);
 };
 ```
 
@@ -88,7 +88,7 @@ about the syntax.
 ```
 import std.print;
 
-@func add_two(a : u32, b: u32) : u32 = {
+func add_two(a : u32, b: u32) : u32 = {
     // Add the two inputs, a and b.
 	return a + b;	
 };
@@ -96,13 +96,13 @@ import std.print;
 /*
 This is main, the entrypoint of the program
 */
-@func main() := {
+func main() := {
 	var a := 16; // u32
 	var b := 32; // u32
 
-	var c := @add_two(a, b); // 48, 
+	var c := add_two(a, b); // 48, 
 
     // Print the result
-    @print(c);
+    print(c);
 };
 ```

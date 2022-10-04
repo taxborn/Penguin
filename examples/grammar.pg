@@ -1,21 +1,21 @@
-import std.@print;
+import std.print;
 
-let a := 5;
+let a := 52;
 let a : i32 = 5;
 let a : u32 = 5;
 
 // main is implicitly typed as 'u32', because it returns the exit code
-@func main() := {
+func main() := {
     a : u32 = 34;
     b : u32 = 35;
-    c := @bar(a, b);
+    c := bar(a, b);
 };
 // Functions will end with a semicolon
 
-@func bar(a : u32, b : u32) : u32 = {
-    @print("Adding a and b.");
+func bar(a : u32, b : u32) : u32 = {
+    print("Adding a and b.");
     // Or, if not imported:
-    // std.@print("Adding a and b.");
+    // std.print("Adding a and b.");
 
     return a + b;
 };
