@@ -1,4 +1,5 @@
 #[derive(Debug)]
+/// Errors that can occur during lexing.
 pub enum LexerError {
     InvalidCharacter(char),
     InvalidIdentifier(String),
@@ -7,33 +8,64 @@ pub enum LexerError {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+/// A token is a single lexical unit of the language.
 enum TokenKind {
-    TypeAssignment,          // :
+    /// A semicolon (:), typically followed by a type or equal sign
+    TypeAssignment, // :
+    /// An equal sign, typically preceded by a type or TypeAssignment
+    LetAssignment, // =
+    /// An assignment that contains a type
+    ///
+    /// E.g. `let a : u32 = 10;`
     TypedAssignment(String), // : u32 =
-    LetAssignment,           // =
-    UnTypedAssignment,       // :=
-    SemiColon,               // ;
+    /// An assignment that does not contain a type
+    ///
+    /// E.g. `let a := "Waddle";`
+    UnTypedAssignment, // :=
+    /// A Semicolon
+    Semicolon, // ;
+    /// Any string of characters that are not symbols in the language
+    ///
+    /// E.g. `let` is an identifier.
     Identifier,
+    /// `let`
     Assign, // let
+    /// Any single (') or double (") quoted strings, allows for escape sequences
     String,
 
+    /// A number
     Number(usize),
 
     // Arithmetic
-    Plus,           // +
+    /// Addition (+)
+    Plus, // +
+    /// Addition assignment (+=)
     ShortIncrement, // +=
 
-    Minus,          // -
+    /// Subtraction (-)
+    Minus, // -
+    /// Subtraction assignment (-=)
     ShortDecrement, // -=
 
-    Multiply,      // *
+    /// Multiplication (*)
+    Multiply, // *
+    /// Multiplication assignment (*=)
     ShortMultiply, // *=
 
-    Divide,      // /
+    /// Division (/)
+    Divide, // /
+    /// Division assignment (/=)
     ShortDivide, // /=
 
-    Modulo,      // %
+    /// Modulo (%)
+    Modulo, // %
+    /// Modulo assignment (%=)
     ShortModulo, // %=
+
+    /// Single line comment
+    Comment, // //
+    /// Multi line comment
+    MultiLineComment(bool), // /* */
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -47,7 +79,7 @@ pub struct Token {
 }
 
 impl Token {
-    // Create a new token
+    /// Create a new token.
     fn new(kind: TokenKind, literal: String) -> Self {
         Self { kind, literal }
     }
@@ -62,6 +94,7 @@ pub struct Lexer {
 }
 
 impl Lexer {
+    /// Create a new lexer from a string.
     pub fn new(contents: String) -> Self {
         Self {
             source: contents.chars().collect(),
@@ -69,6 +102,7 @@ impl Lexer {
         }
     }
 
+    /// Lex the source code into a list of tokens.
     pub fn lex(&mut self) -> Result<Vec<Token>, LexerError> {
         let mut tokens = vec![];
 
@@ -146,7 +180,7 @@ impl Lexer {
                     self.next();
                 }
                 ';' => {
-                    tokens.push(Token::new(TokenKind::SemiColon, current.to_string()));
+                    tokens.push(Token::new(TokenKind::Semicolon, current.to_string()));
 
                     self.next();
                 }
@@ -156,23 +190,23 @@ impl Lexer {
 
                     self.next();
 
-                    while let Some(c) = self.current_char() {
+                    while let Some(next) = self.current_char() {
                         // Check if the current string quote is the same as the
                         // starting quote, if so, we have found the end of the
                         // string.
-                        if c == current {
+                        if next == current {
                             found_close = true;
 
                             break;
                         }
 
                         // Check if the current character is an escape sequence
-                        if c == '\\' {
+                        if next == '\\' {
                             self.next();
 
                             // Match the type of escape sequence
-                            if let Some(c) = self.current_char() {
-                                match c {
+                            if let Some(next) = self.current_char() {
+                                match next {
                                     'n' => buffer.push('\n'),
                                     't' => buffer.push('\t'),
                                     'r' => buffer.push('\r'),
@@ -180,11 +214,15 @@ impl Lexer {
                                     '"' => buffer.push('"'),
                                     '\\' => buffer.push('\\'),
                                     '\'' => buffer.push('\''),
-                                    _ => return Err(LexerError::InvalidEscapeSequence(c)),
+                                    '\n' => {
+                                        // Ignore the newline
+                                        self.next();
+                                    }
+                                    _ => return Err(LexerError::InvalidEscapeSequence(next)),
                                 }
                             }
                         } else {
-                            buffer.push(c);
+                            buffer.push(next);
                         }
 
                         self.next();
@@ -224,12 +262,12 @@ impl Lexer {
                 _ if current.is_numeric() => {
                     let mut buffer = String::new();
 
-                    while let Some(cur) = self.current_char() {
+                    while let Some(next) = self.current_char() {
                         // Check if the current character is a number or an
                         // underscore. Underscores are used to make numbers
                         // more readable, for example, 1_000_000.
-                        if cur.is_numeric() || cur == '_' {
-                            buffer.push(cur);
+                        if next.is_numeric() || next == '_' {
+                            buffer.push(next);
 
                             self.next();
                         } else {
@@ -237,6 +275,7 @@ impl Lexer {
                         }
                     }
 
+                    // Strip the underscores from the number, then parse it
                     let num = buffer.replace("_", "").parse::<usize>().unwrap();
 
                     tokens.push(Token::new(TokenKind::Number(num), buffer));
@@ -253,10 +292,48 @@ impl Lexer {
                 }
                 '*' => {
                     tokens.push(Token::new(TokenKind::Multiply, current.to_string()));
+
                     self.next();
                 }
                 '/' => {
-                    tokens.push(Token::new(TokenKind::Divide, current.to_string()));
+                    self.next();
+
+                    if let Some(next) = self.current_char() {
+                        if next == '/' {
+                            // This is a comment, skip until the end of the line
+                            while let Some(next) = self.current_char() {
+                                if next == '\n' {
+                                    break;
+                                }
+
+                                self.next();
+                            }
+                        } else if next == '*' {
+                            let mut found_close = false;
+                            // This is a multi-line comment, skip until the end
+                            while let Some(next) = self.current_char() {
+                                if next == '*' {
+                                    self.next();
+
+                                    if let Some(next) = self.current_char() {
+                                        if next == '/' {
+                                            found_close = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                self.next();
+                            }
+
+                            if !found_close {
+                                return Err(LexerError::UnexpectedEOF);
+                            }
+                        } else {
+                            // This is a division
+                            tokens.push(Token::new(TokenKind::Divide, current.to_string()));
+                        }
+                    }
 
                     self.next();
                 }
@@ -267,6 +344,7 @@ impl Lexer {
                 }
                 _ if current.is_whitespace() => {
                     // TODO: Should we include whitespace tokens?
+                    // For now, we will ignore them
                     self.next();
                 }
                 _ => {
@@ -278,14 +356,23 @@ impl Lexer {
         Ok(tokens)
     }
 
+    /// Get the current character in the source
     fn current_char(&self) -> Option<char> {
         self.source.get(self.loc).cloned()
     }
 
+    /// Move the lexer to the next character
     fn next(&mut self) {
         self.loc += 1;
     }
 
+    /// Identify a keyword based on a buffer
+    ///
+    /// # Arguments
+    /// * `buffer` - The buffer to identify
+    ///
+    /// # Returns
+    /// The keyword if it exists, otherwise None
     fn identify(buffer: &str) -> Option<TokenKind> {
         // Change the buffer to lowercase to make it easier to compare
         let buffer = buffer.to_lowercase();
@@ -347,7 +434,7 @@ mod tests {
             Token::new(TokenKind::Identifier, "x".to_string()),
             Token::new(TokenKind::UnTypedAssignment, ":=".to_string()),
             Token::new(TokenKind::String, "hello world".to_string()),
-            Token::new(TokenKind::SemiColon, ";".to_string()),
+            Token::new(TokenKind::Semicolon, ";".to_string()),
         ];
 
         assert_eq!(tokens, expected_tokens);
@@ -439,7 +526,7 @@ mod tests {
             Token::new(TokenKind::Identifier, "x".to_string()),
             Token::new(TokenKind::ShortIncrement, "+=".to_string()),
             Token::new(TokenKind::Number(5), "5".to_string()),
-            Token::new(TokenKind::SemiColon, ";".to_string()),
+            Token::new(TokenKind::Semicolon, ";".to_string()),
         ];
 
         assert_eq!(tokens, expected);
@@ -454,7 +541,7 @@ mod tests {
             Token::new(TokenKind::Identifier, "x".to_string()),
             Token::new(TokenKind::ShortDecrement, "-=".to_string()),
             Token::new(TokenKind::Number(5), "5".to_string()),
-            Token::new(TokenKind::SemiColon, ";".to_string()),
+            Token::new(TokenKind::Semicolon, ";".to_string()),
         ];
 
         assert_eq!(tokens, expected);
@@ -470,9 +557,27 @@ mod tests {
             Token::new(TokenKind::Identifier, "x".to_string()),
             Token::new(TokenKind::UnTypedAssignment, ":=".to_string()),
             Token::new(TokenKind::Number(123), "123".to_string()),
-            Token::new(TokenKind::SemiColon, ";".to_string()),
+            Token::new(TokenKind::Semicolon, ";".to_string()),
         ];
 
         assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_that_we_can_have_numbers_and_letters() {
+        let mut lexer = Lexer::new("x123".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![Token::new(TokenKind::Identifier, "x123".to_string())];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_string_ending_with_backslash() {
+        let mut lexer = Lexer::new("\"hello \\".to_string());
+
+        // We expect an error on lexing
+        assert!(lexer.lex().is_err());
     }
 }

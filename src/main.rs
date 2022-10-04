@@ -12,12 +12,10 @@ fn main() {
 
     match lexer.lex() {
         Ok(tokens) => {
-            for token in tokens {
-                println!("{:?}", token);
-            }
+            println!("Tokens: {:#?}", tokens);
         }
         Err(e) => {
-            println!("[LEXER]: {:?}", e);
+            println!("[LEXER ERROR]: {:?}", e);
         }
     }
 }
