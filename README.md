@@ -1,12 +1,15 @@
 # Penguin Language
-This is a language I want to build. Most of what is in the syntax examples below are not implemented yet.
+This is an experimental language that I'm using to teach myself more about compilers.
 
-## TODO:
-- [ ] Create a lexer
-- [ ] Create a parser
-    - [ ] Create AST
-- [ ] Compile.
-Not sure what I want to do for compiling yet, as in if I want to compile to x86_64 assembly (then use [NASM](https://nasm.us/) or [FASM](http://flatassembler.net/)), or transpile to another language like C.
+**Currently working on:** The lexer.
+
+## TODO
+Moved to [TODO.md](TODO.md)
+
+## Known issues:
+- Variables cannot have/start with underscores
+- No floating point numbers
+- 
 
 ## Syntax Examples
 ### Comments:
@@ -21,26 +24,26 @@ Comments
 */
 ```
 ### Variable assignments:
-Variables start with `var` and are assigned using the walrus operator, `:=`,  which is inspired by [Jai](https://inductive.no/jai/). You can either have implicit or static typing in your variables (however implicit typing  won't come for a while). If you are including a type, you can put it between the colon and equal sign like so:
+Variables start with `let` and are assigned using the walrus operator, `:=`,  which is inspired by [Jai](https://inductive.no/jai/). You can either have implicit or static typing in your variables (however implicit typing  won't come for a while). If you are including a type, you can put it between the colon and equal sign like so:
 ```
 // instead of:
-var a := 5;
+let a := 5;
 // you can statically type like so:
-var a : u32 = 5;
+let a : u32 = 5;
 // and white spaces are optional:
-var a:u32=5;
+let a:u32=5;
 ```
 
 Untyped declerations:
 ```
-var a := 5; // u32
-var b := 5.0001; // f32
+let a := 5; // u32
+let b := 5.0001; // f32
 ```
 
 Typed decleration:
 ```
-var a : u16 = 5;
-var b : f64 = 5.001;
+let a : u16 = 5;
+let b : f64 = 5.001;
 ```
 
 ### Functions:
@@ -97,10 +100,10 @@ func add_two(a : u32, b: u32) : u32 = {
 This is main, the entrypoint of the program
 */
 func main() := {
-	var a := 16; // u32
-	var b := 32; // u32
+	let a := 16; // u32
+	let b := 32; // u32
 
-	var c := add_two(a, b); // 48, 
+	let c := add_two(a, b); // 48, 
 
     // Print the result
     print(c);
