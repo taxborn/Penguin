@@ -264,6 +264,10 @@ impl Lexer {
                 _ if current.is_numeric() => {
                     let mut buffer = String::new();
 
+                    buffer.push(current);
+
+                    self.next();
+
                     while let Some(next) = self.current_char() {
                         // Check if the current character is a number or an
                         // underscore. Underscores are used to make numbers
@@ -584,6 +588,32 @@ mod tests {
     }
 
     #[test]
+    fn test_string_with_no_end_quote() {
+        let mut lexer = Lexer::new("\"hello".to_string());
+
+        // We expect an error on lexing
+        assert!(lexer.lex().is_err());
+    }
+
+    #[test]
+    fn test_string_with_no_start_quote() {
+        let mut lexer = Lexer::new("hello\"".to_string());
+
+        // We expect an error on lexing
+        assert!(lexer.lex().is_err());
+    }
+
+    #[test]
+    fn test_number_with_no_digits() {
+        let mut lexer = Lexer::new("1____".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![Token::new(TokenKind::Number(1), "1____".to_string())];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
     fn test_ending_with_comment() {
         let mut lexer = Lexer::new("x := 123; // This is a comment".to_string());
         let tokens = lexer.lex().unwrap();
@@ -600,7 +630,7 @@ mod tests {
 
     #[test]
     fn test_inline_commenting() {
-        let mut lexer = Lexer::new("let x : /* u32 */ = 123; ".to_string());
+        let mut lexer = Lexer::new("let x : /* u32 */ = 123;".to_string());
 
         let tokens = lexer.lex().unwrap();
 

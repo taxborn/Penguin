@@ -1,12 +1,8 @@
 // Should this be lexed as:
 
 //      |=======|
-let test : u32 = "This is a test";
+let test : u32 = "Hello, \"world!\"";
 //      |=======|
 
 //    [ TypedAssignment("u32") ]
 // or [ TypeAssignment, Type("u32"), LetAssignment ]
-
-/*
-This is a test
-*/
