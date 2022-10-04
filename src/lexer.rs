@@ -1,9 +1,13 @@
 #[derive(Debug)]
 /// Errors that can occur during lexing.
 pub enum LexerError {
+    /// An invalid character was encountered.
     InvalidCharacter(char),
+    /// An invalid identifier was encountered.
     InvalidIdentifier(String),
+    /// An invalid escape sequence was encountered.
     InvalidEscapeSequence(char),
+    /// Unexpected end of input.
     UnexpectedEOF,
 }
 
@@ -214,10 +218,8 @@ impl Lexer {
                                     '"' => buffer.push('"'),
                                     '\\' => buffer.push('\\'),
                                     '\'' => buffer.push('\''),
-                                    '\n' => {
-                                        // Ignore the newline
-                                        self.next();
-                                    }
+                                    // Ignore new lines, just continue
+                                    '\n' => self.next(),
                                     _ => return Err(LexerError::InvalidEscapeSequence(next)),
                                 }
                             }

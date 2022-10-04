@@ -20,11 +20,3 @@ let a : u32 = 5;
     std.@print("Adding a and b.");
     return a + b;
 };
-
-
-@func bar(a : u32 , b : u32) : u32 = (
-    // Print something
-    (@print ("WOO"))
-
-    (@bar
-)
