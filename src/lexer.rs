@@ -580,4 +580,36 @@ mod tests {
         // We expect an error on lexing
         assert!(lexer.lex().is_err());
     }
+
+    #[test]
+    fn test_ending_with_comment() {
+        let mut lexer = Lexer::new("x := 123; // This is a comment".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![
+            Token::new(TokenKind::Identifier, "x".to_string()),
+            Token::new(TokenKind::UnTypedAssignment, ":=".to_string()),
+            Token::new(TokenKind::Number(123), "123".to_string()),
+            Token::new(TokenKind::Semicolon, ";".to_string()),
+        ];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_inline_commenting() {
+        let mut lexer = Lexer::new("let x : /* u32 */ = 123; ".to_string());
+
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![
+            Token::new(TokenKind::Assign, "let".to_string()),
+            Token::new(TokenKind::Identifier, "x".to_string()),
+            Token::new(TokenKind::UnTypedAssignment, ":=".to_string()),
+            Token::new(TokenKind::Number(123), "123".to_string()),
+            Token::new(TokenKind::Semicolon, ";".to_string()),
+        ];
+
+        assert_eq!(tokens, expected);
+    }
 }

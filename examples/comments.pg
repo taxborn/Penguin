@@ -6,3 +6,5 @@ is a
 multi-line 
 test 
 */
+
+let a : /* u32 */ = "This is a test";
