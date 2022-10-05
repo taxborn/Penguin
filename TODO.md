@@ -1,7 +1,7 @@
 ## TODO:
 - [ ] Create a lexer - **In progress**
 - [ ] Syntax highlighting - **In progress**
-- [ ] 
+- [ ] Standardize tokens/keywords/
 - [ ] Create a parser
     - [ ] Research optimizations?
     - [ ] Create AST

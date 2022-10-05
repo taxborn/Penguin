@@ -1,8 +1,12 @@
-// Should this be lexed as:
+// Should this:
 
 //      |=======|
 let test : u32 = "Hello, \"world!\"";
 //      |=======|
 
+// be lexed as:
 //    [ TypedAssignment("u32") ]
 // or [ TypeAssignment, Type("u32"), LetAssignment ]
+
+// Is the first option something for the parser to do? Is it wrong to do it 
+// before passing to the parser?
