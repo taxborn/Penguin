@@ -127,10 +127,9 @@ impl Lexer {
                     self.next();
                 }
                 '=' => {
-                    // Check if the previous token was a TypeAssignment,
-                    // if so, this is an UnTypedAssignment
                     if let Some(last) = tokens.last() {
                         match last.kind {
+                            // If the last token was a type assignment, then this is an untyped assignment
                             TokenKind::TypeAssignment => {
                                 // Pop the last token
                                 tokens.pop();
@@ -140,6 +139,7 @@ impl Lexer {
                                     ":=".to_string(),
                                 ));
                             }
+                            // If the last token was a plus, then this is a short increment
                             TokenKind::Plus => {
                                 // Pop the last token
                                 tokens.pop();
@@ -147,6 +147,7 @@ impl Lexer {
                                 tokens
                                     .push(Token::new(TokenKind::ShortIncrement, "+=".to_string()));
                             }
+                            // If the last token was a minus, then this is a short decrement
                             TokenKind::Minus => {
                                 // Pop the last token
                                 tokens.pop();
@@ -154,24 +155,28 @@ impl Lexer {
                                 tokens
                                     .push(Token::new(TokenKind::ShortDecrement, "-=".to_string()));
                             }
+                            // If the last token was a multiply, then this is a short multiply
                             TokenKind::Multiply => {
                                 // Pop the last token
                                 tokens.pop();
 
                                 tokens.push(Token::new(TokenKind::ShortMultiply, "*=".to_string()));
                             }
+                            // If the last token was a divide, then this is a short divide
                             TokenKind::Divide => {
                                 // Pop the last token
                                 tokens.pop();
 
                                 tokens.push(Token::new(TokenKind::ShortDivide, "/=".to_string()));
                             }
+                            // If the last token was a modulo, then this is a short modulo
                             TokenKind::Modulo => {
                                 // Pop the last token
                                 tokens.pop();
 
                                 tokens.push(Token::new(TokenKind::ShortModulo, "%=".to_string()));
                             }
+                            // Otherwise, this is a normal assignment
                             _ => {
                                 tokens.push(Token::new(
                                     TokenKind::LetAssignment,
@@ -205,6 +210,7 @@ impl Lexer {
                         }
 
                         // Check if the current character is an escape sequence
+                        // otherwise, just add it to the buffer
                         if next == '\\' {
                             self.next();
 
@@ -216,9 +222,12 @@ impl Lexer {
                                     'r' => buffer.push('\r'),
                                     '0' => buffer.push('\0'),
                                     '"' => buffer.push('"'),
-                                    '\\' => buffer.push('\\'),
                                     '\'' => buffer.push('\''),
-                                    // Ignore new lines, just continue
+                                    '\\' => buffer.push('\\'),
+                                    // Ignore new lines, just continue. I
+                                    // actually don't know if this is the
+                                    // correct way to handle this, but it
+                                    // works for now.
                                     '\n' => self.next(),
                                     _ => return Err(LexerError::InvalidEscapeSequence(next)),
                                 }
@@ -230,7 +239,8 @@ impl Lexer {
                         self.next();
                     }
 
-                    // Check if we found the closing quote
+                    // If we didn't find the end of the string, return an error
+                    // TODO: Add line numbers
                     if !found_close {
                         return Err(LexerError::UnexpectedEOF);
                     }
@@ -241,11 +251,11 @@ impl Lexer {
                 }
                 // Identifiers start with a letter (underscore in the future)
                 // and can contain numbers.
-                _ if current.is_alphabetic() => {
+                '_' | 'a'..='z' | 'A'..='Z' => {
                     let mut buffer = String::new();
 
                     while let Some(cur) = self.current_char() {
-                        if cur.is_alphanumeric() {
+                        if cur.is_alphanumeric() || cur == '_' {
                             buffer.push(cur);
 
                             self.next();
@@ -254,11 +264,11 @@ impl Lexer {
                         }
                     }
 
-                    if let Some(kind) = Lexer::identify(&buffer) {
-                        tokens.push(Token::new(kind, buffer));
-                    } else {
-                        tokens.push(Token::new(TokenKind::Identifier, buffer));
-                    }
+                    // Check if the buffer is a keyword, otherwise, it is an
+                    // identifier
+                    let token = Lexer::identify(&buffer);
+
+                    tokens.push(token);
                 }
                 // TODO: Add support for floats
                 _ if current.is_numeric() => {
@@ -386,13 +396,13 @@ impl Lexer {
     ///
     /// # Returns
     /// The keyword if it exists, otherwise None
-    fn identify(buffer: &str) -> Option<TokenKind> {
+    fn identify(buffer: &str) -> Token {
         // Change the buffer to lowercase to make it easier to compare
-        let buffer = buffer.to_lowercase();
+        let buffer_copied = buffer.to_owned().to_lowercase();
 
-        match buffer.as_str() {
-            "let" => Some(TokenKind::Assign),
-            _ => None,
+        match buffer_copied.as_str() {
+            "let" => Token::new(TokenKind::Assign, buffer.to_string()),
+            _ => Token::new(TokenKind::Identifier, buffer.to_string()),
         }
     }
 }

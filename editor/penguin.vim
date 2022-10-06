@@ -28,7 +28,7 @@ syntax region penguinString start=/\v"/ skip=/\v\\./ end=/\v"/ contains=penguinE
 syntax region penguinChar start=/\v'/ skip=/\v\\./ end=/\v'/ contains=penguinEscapes
 
 " Escape literals \n, \r, ....
-syntax match penguinEscapes display contained "\\[nr\"']"
+syntax match penguinEscapes display contained "\\[nrt0\\\"']"
 
 " Function definitions, matches the word '@func' followed by a word
 syntax region penguinFuncDef start="@func" end=/\v\w+/ contains=penguinFuncName

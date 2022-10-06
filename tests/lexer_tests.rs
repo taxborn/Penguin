@@ -41,6 +41,47 @@ mod tests {
     }
 
     #[test]
+    fn test_underscore_identifier() {
+        let mut lexer = Lexer::new("_".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![Token::new(TokenKind::Identifier, "_".to_string())];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_multiple_underscores() {
+        let mut lexer = Lexer::new("__foo__bar__baz____".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![Token::new(
+            TokenKind::Identifier,
+            "__foo__bar__baz____".to_string(),
+        )];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_variable_assignment_with_underscore() {
+        let mut lexer = Lexer::new("let __foo__bar__baz____ : u32 = 123456;".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![
+            Token::new(TokenKind::Assign, "let".to_string()),
+            Token::new(TokenKind::Identifier, "__foo__bar__baz____".to_string()),
+            Token::new(TokenKind::TypeAssignment, ":".to_string()),
+            Token::new(TokenKind::Identifier, "u32".to_string()),
+            Token::new(TokenKind::LetAssignment, "=".to_string()),
+            Token::new(TokenKind::Number(123456), "123456".to_string()),
+            Token::new(TokenKind::Semicolon, ";".to_string()),
+        ];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
     fn lex_variable_assignment_to_string() {
         let mut lexer = Lexer::new("let x : = \"hello world\";".to_string());
         let tokens = lexer.lex().unwrap();
@@ -240,13 +281,13 @@ mod tests {
 
     #[test]
     fn test_inline_commenting() {
-        let mut lexer = Lexer::new("let x : /* u32 */ = 123;".to_string());
+        let mut lexer = Lexer::new("let __foo__bar__baz____ : /* u32 */ = 123;".to_string());
 
         let tokens = lexer.lex().unwrap();
 
         let expected = vec![
             Token::new(TokenKind::Assign, "let".to_string()),
-            Token::new(TokenKind::Identifier, "x".to_string()),
+            Token::new(TokenKind::Identifier, "__foo__bar__baz____".to_string()),
             Token::new(TokenKind::UnTypedAssignment, ":=".to_string()),
             Token::new(TokenKind::Number(123), "123".to_string()),
             Token::new(TokenKind::Semicolon, ";".to_string()),
