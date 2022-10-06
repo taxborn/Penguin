@@ -85,7 +85,7 @@ func main() := {
 ```
 
 ### Small example program
-Putting all of those syntax exampels together, this is an example program put 
+Putting all of those syntax examples together, this is an example program put 
 together to see how it all looks together. This will change as feedback is given
 about the syntax.
 ```

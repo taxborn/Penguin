@@ -149,56 +149,22 @@ impl Lexer {
                     self.next();
                 }
                 '=' => {
-                    if let Some(last) = tokens.last() {
-                        match last.kind {
-                            // If the last token was a type assignment, then this is an untyped assignment
-                            TokenKind::TypeAssignment => {
-                                // Pop the last token
-                                tokens.pop();
+                    // Right now, the only way to tell if an assignment is
+                    // typed or not is to check if the previous token is a
+                    // TypeAssignment. If it is, then this is a TypedAssignment.
+                    //
+                    // I want to handle this logic in the ':' case, but I'm not
+                    // sure how to do that yet, or if it's even possible.
+                    // Maybe this is something that can be handled in the
+                    // parser?
+                    let previous_token = tokens.last().unwrap();
 
-                                tokens.push(Token::new(
-                                    TokenKind::UnTypedAssignment,
-                                    ":=".to_string(),
-                                ));
-                            }
-                            // If the last token was a plus, then this is a short increment
-                            TokenKind::Plus => {
-                                // Pop the last token
-                                tokens.pop();
+                    if previous_token.kind == TokenKind::TypeAssignment {
+                        tokens.pop();
 
-                                tokens
-                                    .push(Token::new(TokenKind::ShortIncrement, "+=".to_string()));
-                            }
-                            // If the last token was a minus, then this is a short decrement
-                            TokenKind::Minus => {
-                                // Pop the last token
-                                tokens.pop();
-
-                                tokens
-                                    .push(Token::new(TokenKind::ShortDecrement, "-=".to_string()));
-                            }
-                            // If the last token was a multiply, then this is a short multiply
-                            TokenKind::Multiply => {
-                                // Pop the last token
-                                tokens.pop();
-
-                                tokens.push(Token::new(TokenKind::ShortMultiply, "*=".to_string()));
-                            }
-                            // If the last token was a modulo, then this is a short modulo
-                            TokenKind::Modulo => {
-                                // Pop the last token
-                                tokens.pop();
-
-                                tokens.push(Token::new(TokenKind::ShortModulo, "%=".to_string()));
-                            }
-                            // Otherwise, this is a normal assignment
-                            _ => {
-                                tokens.push(Token::new(
-                                    TokenKind::LetAssignment,
-                                    current.to_string(),
-                                ));
-                            }
-                        }
+                        tokens.push(Token::new(TokenKind::UnTypedAssignment, ":=".to_string()));
+                    } else {
+                        tokens.push(Token::new(TokenKind::LetAssignment, current.to_string()));
                     }
 
                     self.next();
@@ -312,22 +278,90 @@ impl Lexer {
                     tokens.push(Token::new(TokenKind::Number(num), buffer));
                 }
                 '+' => {
-                    tokens.push(Token::new(TokenKind::Plus, current.to_string()));
+                    self.next();
+
+                    // Check if the next character is an equals sign, if so,
+                    // this is a short increment
+                    while let Some(next) = self.current_char() {
+                        if next == '=' {
+                            tokens.push(Token::new(TokenKind::ShortIncrement, "+=".to_string()));
+                        } else {
+                            // Otherwise, this is a normal plus. Also decrement
+                            // the location so that the next token is not
+                            // skipped
+                            self.prev();
+
+                            tokens.push(Token::new(TokenKind::Plus, current.to_string()));
+                        }
+
+                        break;
+                    }
 
                     self.next();
                 }
                 '-' => {
-                    tokens.push(Token::new(TokenKind::Minus, current.to_string()));
+                    self.next();
+
+                    // Check if the next character is an equals sign, if so,
+                    // this is a short decrement
+                    while let Some(next) = self.current_char() {
+                        if next == '=' {
+                            tokens.push(Token::new(TokenKind::ShortDecrement, "-=".to_string()));
+                        } else {
+                            // Otherwise, this is a normal minus. Also decrement
+                            // the location so that the next token is not
+                            // skipped
+                            self.prev();
+
+                            tokens.push(Token::new(TokenKind::Minus, current.to_string()));
+                        }
+
+                        break;
+                    }
 
                     self.next();
                 }
                 '*' => {
-                    tokens.push(Token::new(TokenKind::Multiply, current.to_string()));
+                    self.next();
+
+                    // Check if the next character is an equals sign, if so,
+                    // this is a short multiply
+                    while let Some(next) = self.current_char() {
+                        if next == '=' {
+                            tokens.push(Token::new(TokenKind::ShortMultiply, "*=".to_string()));
+                        } else {
+                            // Otherwise, this is a normal multiplication. Also
+                            // decrementthe location so that the next token is
+                            // not skipped
+                            self.prev();
+
+                            tokens.push(Token::new(TokenKind::Multiply, current.to_string()));
+                        }
+
+                        break;
+                    }
 
                     self.next();
                 }
                 '%' => {
-                    tokens.push(Token::new(TokenKind::Modulo, current.to_string()));
+                    self.next();
+
+                    // Check if the next character is an modulo, if so,
+                    // this is a short modulo
+                    while let Some(next) = self.current_char() {
+                        if next == '=' {
+                            tokens.push(Token::new(TokenKind::ShortModulo, "%=".to_string()));
+                        } else {
+                            // Otherwise, this is a normal modulo. Also decrement
+                            // the location so that the next token is not
+                            // skipped
+                            self.prev();
+
+                            tokens.push(Token::new(TokenKind::Modulo, current.to_string()));
+                        }
+
+                        break;
+                    }
 
                     self.next();
                 }
