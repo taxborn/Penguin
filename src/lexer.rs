@@ -65,11 +65,6 @@ pub enum TokenKind {
     Modulo, // %
     /// Modulo assignment (%=)
     ShortModulo, // %=
-
-    /// Single line comment
-    Comment, // //
-    /// Multi line comment
-    MultiLineComment(bool), // /* */
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -161,13 +156,6 @@ impl Lexer {
                                 tokens.pop();
 
                                 tokens.push(Token::new(TokenKind::ShortMultiply, "*=".to_string()));
-                            }
-                            // If the last token was a divide, then this is a short divide
-                            TokenKind::Divide => {
-                                // Pop the last token
-                                tokens.pop();
-
-                                tokens.push(Token::new(TokenKind::ShortDivide, "/=".to_string()));
                             }
                             // If the last token was a modulo, then this is a short modulo
                             TokenKind::Modulo => {
@@ -311,6 +299,11 @@ impl Lexer {
 
                     self.next();
                 }
+                '%' => {
+                    tokens.push(Token::new(TokenKind::Modulo, current.to_string()));
+
+                    self.next();
+                }
                 '/' => {
                     self.next();
 
@@ -328,13 +321,13 @@ impl Lexer {
                             // This is a multi-line comment, skip until the end
                             let mut found_close = false;
 
+                            // Check if there is a closing comment tag,
+                            // if so, break out of the loop.
+                            //
+                            // TODO: Do we want to check for a closing
+                            // comment tag? Or allow the user to forget
+                            // to close the comment?
                             while let Some(next) = self.current_char() {
-                                // Check if there is a closing comment tag,
-                                // if so, break out of the loop.
-                                //
-                                // TODO: Do we want to check for a closing
-                                // comment tag? Or allow the user to forget
-                                // to close the comment?
                                 if next == '*' {
                                     self.next();
 
@@ -352,16 +345,17 @@ impl Lexer {
                             if !found_close {
                                 return Err(LexerError::UnexpectedEOF);
                             }
+                        } else if next == '=' {
+                            tokens.push(Token::new(TokenKind::ShortDivide, "/=".to_string()));
                         } else {
-                            // This is a division
+                            // This is a division, push the token and move back
+                            // because we probably need to check what it was
+                            // dividing by.
                             tokens.push(Token::new(TokenKind::Divide, current.to_string()));
+
+                            self.prev();
                         }
                     }
-
-                    self.next();
-                }
-                '%' => {
-                    tokens.push(Token::new(TokenKind::Modulo, current.to_string()));
 
                     self.next();
                 }
@@ -387,6 +381,11 @@ impl Lexer {
     /// Move the lexer to the next character
     fn next(&mut self) {
         self.loc += 1;
+    }
+
+    /// Move the lexer to the previous character
+    fn prev(&mut self) {
+        self.loc -= 1;
     }
 
     /// Identify a keyword based on a buffer

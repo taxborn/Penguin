@@ -295,4 +295,43 @@ mod tests {
 
         assert_eq!(tokens, expected);
     }
+
+    #[test]
+    fn test_inline_commenting_with_no_end() {
+        let mut lexer = Lexer::new("let __foo__bar__baz____ : /* u32 = 123;".to_string());
+
+        // We expect an error on lexing
+        assert!(lexer.lex().is_err());
+    }
+
+    #[test]
+    fn test_arithmetic_lexing() {
+        let mut lexer = Lexer::new("1+2-3*4/5%6+=7-=8*=9/=1%=".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![
+            Token::new(TokenKind::Number(1), "1".to_string()),
+            Token::new(TokenKind::Plus, "+".to_string()),
+            Token::new(TokenKind::Number(2), "2".to_string()),
+            Token::new(TokenKind::Minus, "-".to_string()),
+            Token::new(TokenKind::Number(3), "3".to_string()),
+            Token::new(TokenKind::Multiply, "*".to_string()),
+            Token::new(TokenKind::Number(4), "4".to_string()),
+            Token::new(TokenKind::Divide, "/".to_string()),
+            Token::new(TokenKind::Number(5), "5".to_string()),
+            Token::new(TokenKind::Modulo, "%".to_string()),
+            Token::new(TokenKind::Number(6), "6".to_string()),
+            Token::new(TokenKind::ShortIncrement, "+=".to_string()),
+            Token::new(TokenKind::Number(7), "7".to_string()),
+            Token::new(TokenKind::ShortDecrement, "-=".to_string()),
+            Token::new(TokenKind::Number(8), "8".to_string()),
+            Token::new(TokenKind::ShortMultiply, "*=".to_string()),
+            Token::new(TokenKind::Number(9), "9".to_string()),
+            Token::new(TokenKind::ShortDivide, "/=".to_string()),
+            Token::new(TokenKind::Number(1), "1".to_string()),
+            Token::new(TokenKind::ShortModulo, "%=".to_string()),
+        ];
+
+        assert_eq!(tokens, expected);
+    }
 }
