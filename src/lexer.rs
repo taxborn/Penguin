@@ -65,6 +65,24 @@ pub enum TokenKind {
     Modulo, // %
     /// Modulo assignment (%=)
     ShortModulo, // %=
+
+    /// Open parenthesis
+    OpenParen, // (
+    /// Close parenthesis
+    CloseParen, // )
+
+    /// Open curly brace
+    OpenBrace, // {
+    /// Close curly brace
+    CloseBrace, // }
+
+    /// Open square bracket
+    OpenBracket, // [
+    /// Close square bracket
+    CloseBracket, // ]
+
+    /// Function
+    Function, // func
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -359,6 +377,36 @@ impl Lexer {
 
                     self.next();
                 }
+                '(' => {
+                    tokens.push(Token::new(TokenKind::OpenParen, current.to_string()));
+
+                    self.next();
+                }
+                ')' => {
+                    tokens.push(Token::new(TokenKind::CloseParen, current.to_string()));
+
+                    self.next();
+                }
+                '{' => {
+                    tokens.push(Token::new(TokenKind::OpenBrace, current.to_string()));
+
+                    self.next();
+                }
+                '}' => {
+                    tokens.push(Token::new(TokenKind::CloseBrace, current.to_string()));
+
+                    self.next();
+                }
+                '[' => {
+                    tokens.push(Token::new(TokenKind::OpenBracket, current.to_string()));
+
+                    self.next();
+                }
+                ']' => {
+                    tokens.push(Token::new(TokenKind::CloseBracket, current.to_string()));
+
+                    self.next();
+                }
                 _ if current.is_whitespace() => {
                     // TODO: Should we include whitespace tokens?
                     // For now, we will ignore them
@@ -401,6 +449,7 @@ impl Lexer {
 
         match buffer_copied.as_str() {
             "let" => Token::new(TokenKind::Assign, buffer.to_string()),
+            "func" => Token::new(TokenKind::Function, buffer.to_string()),
             _ => Token::new(TokenKind::Identifier, buffer.to_string()),
         }
     }

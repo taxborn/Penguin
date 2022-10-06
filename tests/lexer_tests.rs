@@ -352,4 +352,77 @@ mod tests {
 
         assert_eq!(tokens, expected);
     }
+
+    #[test]
+    fn test_open_close_braces() {
+        let mut lexer = Lexer::new("(){}[]".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![
+            Token::new(TokenKind::OpenParen, "(".to_string()),
+            Token::new(TokenKind::CloseParen, ")".to_string()),
+            Token::new(TokenKind::OpenBrace, "{".to_string()),
+            Token::new(TokenKind::CloseBrace, "}".to_string()),
+            Token::new(TokenKind::OpenBracket, "[".to_string()),
+            Token::new(TokenKind::CloseBracket, "]".to_string()),
+        ];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_function_lexing() {
+        let mut lexer = Lexer::new("func main() := {}".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![
+            Token::new(TokenKind::Function, "func".to_string()),
+            Token::new(TokenKind::Identifier, "main".to_string()),
+            Token::new(TokenKind::OpenParen, "(".to_string()),
+            Token::new(TokenKind::CloseParen, ")".to_string()),
+            Token::new(TokenKind::UnTypedAssignment, ":=".to_string()),
+            Token::new(TokenKind::OpenBrace, "{".to_string()),
+            Token::new(TokenKind::CloseBrace, "}".to_string()),
+        ];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_function_case_sensitivity() {
+        let mut lexer = Lexer::new("FuNc main() := {}".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![
+            Token::new(TokenKind::Function, "FuNc".to_string()),
+            Token::new(TokenKind::Identifier, "main".to_string()),
+            Token::new(TokenKind::OpenParen, "(".to_string()),
+            Token::new(TokenKind::CloseParen, ")".to_string()),
+            Token::new(TokenKind::UnTypedAssignment, ":=".to_string()),
+            Token::new(TokenKind::OpenBrace, "{".to_string()),
+            Token::new(TokenKind::CloseBrace, "}".to_string()),
+        ];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_function_with_return_type() {
+        let mut lexer = Lexer::new("func main() : u32 = {}".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![
+            Token::new(TokenKind::Function, "func".to_string()),
+            Token::new(TokenKind::Identifier, "main".to_string()),
+            Token::new(TokenKind::OpenParen, "(".to_string()),
+            Token::new(TokenKind::CloseParen, ")".to_string()),
+            Token::new(TokenKind::TypeAssignment, ":".to_string()),
+            Token::new(TokenKind::Identifier, "u32".to_string()),
+            Token::new(TokenKind::LetAssignment, "=".to_string()),
+            Token::new(TokenKind::OpenBrace, "{".to_string()),
+            Token::new(TokenKind::CloseBrace, "}".to_string()),
+        ];
+
+        assert_eq!(tokens, expected);
+    }
 }
