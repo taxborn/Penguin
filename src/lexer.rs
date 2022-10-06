@@ -83,6 +83,12 @@ pub enum TokenKind {
 
     /// Function
     Function, // func
+
+    /// Return
+    Return, // return
+
+    /// Import
+    Import, // import
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -450,6 +456,8 @@ impl Lexer {
         match buffer_copied.as_str() {
             "let" => Token::new(TokenKind::Assign, buffer.to_string()),
             "func" => Token::new(TokenKind::Function, buffer.to_string()),
+            "return" => Token::new(TokenKind::Return, buffer.to_string()),
+            "import" => Token::new(TokenKind::Import, buffer.to_string()),
             _ => Token::new(TokenKind::Identifier, buffer.to_string()),
         }
     }

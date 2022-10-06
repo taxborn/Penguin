@@ -425,4 +425,41 @@ mod tests {
 
         assert_eq!(tokens, expected);
     }
+
+    #[test]
+    fn test_function_with_return_type_and_parameters() {
+        let mut lexer = Lexer::new("func main() : u32 = { return 5; }".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![
+            Token::new(TokenKind::Function, "func".to_string()),
+            Token::new(TokenKind::Identifier, "main".to_string()),
+            Token::new(TokenKind::OpenParen, "(".to_string()),
+            Token::new(TokenKind::CloseParen, ")".to_string()),
+            Token::new(TokenKind::TypeAssignment, ":".to_string()),
+            Token::new(TokenKind::Identifier, "u32".to_string()),
+            Token::new(TokenKind::LetAssignment, "=".to_string()),
+            Token::new(TokenKind::OpenBrace, "{".to_string()),
+            Token::new(TokenKind::Return, "return".to_string()),
+            Token::new(TokenKind::Number(5), "5".to_string()),
+            Token::new(TokenKind::Semicolon, ";".to_string()),
+            Token::new(TokenKind::CloseBrace, "}".to_string()),
+        ];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn test_importing() {
+        let mut lexer = Lexer::new("import \"test\";".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![
+            Token::new(TokenKind::Import, "import".to_string()),
+            Token::new(TokenKind::String, "test".to_string()),
+            Token::new(TokenKind::Semicolon, ";".to_string()),
+        ];
+
+        assert_eq!(tokens, expected);
+    }
 }
