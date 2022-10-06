@@ -7,9 +7,7 @@ This is an experimental language that I'm using to teach myself more about compi
 Moved to [TODO.md](TODO.md)
 
 ## Known issues:
-- Variables cannot have/start with underscores
 - No floating point numbers
-- 
 
 ## Syntax Examples
 ### Comments:
