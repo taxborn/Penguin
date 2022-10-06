@@ -334,4 +334,22 @@ mod tests {
 
         assert_eq!(tokens, expected);
     }
+
+    #[test]
+    fn test_readme_example() {
+        let mut lexer = Lexer::new("let x:u32=5;".to_string());
+        let tokens = lexer.lex().unwrap();
+
+        let expected = vec![
+            Token::new(TokenKind::Assign, "let".to_string()),
+            Token::new(TokenKind::Identifier, "x".to_string()),
+            Token::new(TokenKind::TypeAssignment, ":".to_string()),
+            Token::new(TokenKind::Identifier, "u32".to_string()),
+            Token::new(TokenKind::LetAssignment, "=".to_string()),
+            Token::new(TokenKind::Number(5), "5".to_string()),
+            Token::new(TokenKind::Semicolon, ";".to_string()),
+        ];
+
+        assert_eq!(tokens, expected);
+    }
 }
