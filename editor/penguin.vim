@@ -15,7 +15,7 @@ set iskeyword=a-z,A-Z,-,*,_,!,@
 syntax keyword penguinTodos TODO FIXME NOTE
 
 " Language keywords
-syntax keyword penguinKeywords let func
+syntax keyword penguinKeywords let func import
 
 " Comments
 syntax region penguinCommentLine start="//" end="$"          contains=penguinTodos

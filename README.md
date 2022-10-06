@@ -64,8 +64,10 @@ func add_two(a : u32, b : u32) : u32 = {
 ```
 
 ### Imports
+**TODO**: Determine if I want these imports in string literals or not.
+E.g. `import std.print` vs. `import "std.print"`
 ```
-import std;
+import "std";
 
 func main() := {
     // ... 
@@ -74,7 +76,7 @@ func main() := {
 ```
 Or
 ```
-import std.print;
+import "std.print";
 
 func main() := {
     // ...
@@ -87,7 +89,7 @@ Putting all of those syntax exampels together, this is an example program put
 together to see how it all looks together. This will change as feedback is given
 about the syntax.
 ```
-import std.print;
+import "std.print";
 
 func add_two(a : u32, b: u32) : u32 = {
     // Add the two inputs, a and b.

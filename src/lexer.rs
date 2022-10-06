@@ -81,6 +81,9 @@ pub enum TokenKind {
     /// Close square bracket
     CloseBracket, // ]
 
+    /// A comma
+    Comma, // ,
+
     /// Function
     Function, // func
 
@@ -410,6 +413,11 @@ impl Lexer {
                 }
                 ']' => {
                     tokens.push(Token::new(TokenKind::CloseBracket, current.to_string()));
+
+                    self.next();
+                }
+                ',' => {
+                    tokens.push(Token::new(TokenKind::Comma, current.to_string()));
 
                     self.next();
                 }

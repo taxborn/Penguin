@@ -1,13 +1,10 @@
-import std.print;
-
-let a := 52;
-let a : i32 = 5;
-let a : u32 = 5;
+import "std.print";
 
 // main is implicitly typed as 'u32', because it returns the exit code
 func main() := {
-    a : u32 = 34;
+    a : /* u32 */ = 34;
     b : u32 = 35;
+
     c := bar(a, b);
 };
 // Functions will end with a semicolon
