@@ -15,7 +15,7 @@ fn main() {
             println!("Tokens: {:#?}", tokens);
         }
         Err(e) => {
-            println!("[LEXER ERROR]: {:?}", e);
+            println!("[LEXER ERROR]: {}", e);
         }
     }
 }

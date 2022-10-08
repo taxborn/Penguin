@@ -1,14 +1,50 @@
+use std::fmt;
+
+/// A position type to keep track of where we are in the source code.
+type Position = (usize, usize);
+
 #[derive(Debug)]
 /// Errors that can occur during lexing.
 pub enum LexerError {
     /// An invalid character was encountered.
-    InvalidCharacter(char),
+    InvalidCharacter(Position, char),
     /// An invalid identifier was encountered.
-    InvalidIdentifier(String),
+    InvalidIdentifier(Position, String),
     /// An invalid escape sequence was encountered.
-    InvalidEscapeSequence(char),
+    InvalidEscapeSequence(Position, char),
     /// Unexpected end of input.
-    UnexpectedEOF,
+    UnexpectedEOF(Position),
+}
+
+impl fmt::Display for LexerError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            LexerError::InvalidCharacter((line, col), c) => {
+                write!(
+                    f,
+                    "Invalid character '{}' at line {}, column {}",
+                    c, line, col
+                )
+            }
+            LexerError::InvalidIdentifier((line, col), s) => {
+                write!(
+                    f,
+                    "Invalid identifier '{}' at line {}, column {}",
+                    s, line, col
+                )
+            }
+            LexerError::InvalidEscapeSequence((line, col), c) => {
+                write!(
+                    f,
+                    "Invalid escape sequence '{}' at line {}, column {}",
+                    c, line, col
+                )
+            }
+            LexerError::UnexpectedEOF((line, col)) => {
+                write!(f, "Unexpected end of file at line {}, column {}", line, col)
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -84,7 +120,7 @@ pub enum TokenKind {
     /// A comma
     Comma, // ,
 
-    /// Function
+    /// Function Function, // func
     Function, // func
 
     /// Return
@@ -112,11 +148,71 @@ impl Token {
 }
 
 #[derive(Debug)]
+pub struct Location {
+    pub line: usize,
+    pub column: usize,
+    pub index: usize,
+    pub prev_line_length: usize,
+    pub current_line_length: usize,
+}
+
+impl Location {
+    pub fn new(line: usize, column: usize) -> Self {
+        Self {
+            line,
+            column,
+            index: 0,
+            // TODO: We might want to rememeber all of the previous lines
+            // lengths for diagnostics, but for now we only need the length of
+            // the previous line
+            prev_line_length: 0,
+            current_line_length: 0,
+            // TODO add a `source` field that points to the source file. This
+            // would require the lexer to be passed a reference to the source
+            // file.
+        }
+    }
+
+    pub fn advance(&mut self, current: Option<char>) {
+        if let Some(current) = current {
+            if current == '\n' {
+                self.line += 1;
+                self.column = 0;
+                self.prev_line_length = self.current_line_length;
+                self.current_line_length = 0;
+            } else {
+                self.column += 1;
+                self.current_line_length += 1;
+            }
+            self.index += 1;
+        }
+    }
+
+    pub fn retreat(&mut self, current: Option<char>) {
+        if let Some(current) = current {
+            if current == '\n' {
+                self.line -= 1;
+                self.column = 0;
+                self.current_line_length = self.prev_line_length;
+                self.prev_line_length = 0;
+            } else {
+                self.column -= 1;
+            }
+
+            self.index -= 1;
+        }
+    }
+
+    pub fn current_location(&self) -> Position {
+        (self.line, self.column)
+    }
+}
+
+#[derive(Debug)]
 pub struct Lexer {
     source: Vec<char>,
-    // TODO: Make this it's own structure to allow for multiple files
-    // and line numbers to be tracked
-    loc: usize,
+    loc: Location,
+    current: Option<char>,
 }
 
 impl Lexer {
@@ -124,7 +220,8 @@ impl Lexer {
     pub fn new(contents: String) -> Self {
         Self {
             source: contents.chars().collect(),
-            loc: 0,
+            current: None,
+            loc: Location::new(1, 0),
         }
     }
 
@@ -133,9 +230,10 @@ impl Lexer {
         let mut tokens = vec![];
 
         // While we are not at the end of the contents
-        while self.source.len() > self.loc {
-            let current = if let Some(c) = self.current_char() {
-                c
+        while self.source.len() > self.loc.index {
+            let current = if let Some(current) = self.current_char() {
+                self.current = Some(current);
+                current
             } else {
                 // Reached the end of the file
                 break;
@@ -210,7 +308,14 @@ impl Lexer {
                                     // correct way to handle this, but it
                                     // works for now.
                                     '\n' => self.next(),
-                                    _ => return Err(LexerError::InvalidEscapeSequence(next)),
+                                    _ => {
+                                        self.next();
+
+                                        return Err(LexerError::InvalidEscapeSequence(
+                                            self.loc.current_location(),
+                                            next,
+                                        ));
+                                    }
                                 }
                             }
                         } else {
@@ -221,9 +326,8 @@ impl Lexer {
                     }
 
                     // If we didn't find the end of the string, return an error
-                    // TODO: Add line numbers
                     if !found_close {
-                        return Err(LexerError::UnexpectedEOF);
+                        return Err(LexerError::UnexpectedEOF(self.loc.current_location()));
                     }
 
                     tokens.push(Token::new(TokenKind::String, buffer));
@@ -404,7 +508,7 @@ impl Lexer {
                             }
 
                             if !found_close {
-                                return Err(LexerError::UnexpectedEOF);
+                                return Err(LexerError::UnexpectedEOF(self.loc.current_location()));
                             }
                         } else if next == '=' {
                             tokens.push(Token::new(TokenKind::ShortDivide, "/=".to_string()));
@@ -461,7 +565,12 @@ impl Lexer {
                     self.next();
                 }
                 _ => {
-                    return Err(LexerError::InvalidCharacter(current));
+                    self.next();
+
+                    return Err(LexerError::InvalidCharacter(
+                        self.loc.current_location(),
+                        current,
+                    ));
                 }
             }
         }
@@ -471,17 +580,17 @@ impl Lexer {
 
     /// Get the current character in the source
     fn current_char(&self) -> Option<char> {
-        self.source.get(self.loc).cloned()
+        self.source.get(self.loc.index).cloned()
     }
 
     /// Move the lexer to the next character
     fn next(&mut self) {
-        self.loc += 1;
+        self.loc.advance(self.current_char());
     }
 
     /// Move the lexer to the previous character
     fn prev(&mut self) {
-        self.loc -= 1;
+        self.loc.retreat(self.current_char());
     }
 
     /// Identify a keyword based on a buffer
