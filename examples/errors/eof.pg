@@ -1,0 +1,7 @@
+/* 
+ * Examples: Unexpected end of file error
+ *
+ * This example shows an unexpected end of file error in Penguin.
+ */
+
+let unclosed_string := "This is a string with an unclosed quote

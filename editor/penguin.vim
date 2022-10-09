@@ -5,6 +5,7 @@
 " Put this file in .vim/syntax/penguin.vim
 " and add in your .vimrc file the next line:
 " autocmd BufRead,BufNewFile *.pg set filetype=penguin
+" autocmd BufRead,BufNewFile *.penguin set filetype=penguin
 
 if exists("b:current_syntax")
   finish
@@ -40,7 +41,7 @@ syntax match penguinFuncName display contained /\v\w+/
 syntax match penguinNumber display contained /\v[0-9]+/
 
 " Type names the compiler recognizes
-syntax keyword penguinTypeNames u32 u16 i32 i16 f32 f16 bool char string
+syntax keyword penguinTypeNames int bool char string str float
 
 " Set highlights
 highlight default link penguinTodos Todo
@@ -49,7 +50,7 @@ highlight default link penguinCommentLine Comment
 highlight default link penguinMultiCommentLine Comment
 highlight default link penguinString String
 highlight default link penguinNumber Statement
-highlight default link penguinTypeNames Comment
+highlight default link penguinTypeNames Type
 highlight default link penguinChar Character
 highlight default link penguinEscapes SpecialChar
 highlight default link penguinFuncDef Function

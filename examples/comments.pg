@@ -1,10 +1,18 @@
-// This is a test
+/* 
+ * Examples: Comments
+ *
+ * This example shows how to use of comments in Penguin.
+ */
+
+// This is a single line comment
+
+/* This is a multi-line comment over a single line */
 
 /* 
-This
-is a 
-multi-line 
-test 
-*/
+ * This is a multi-line comment over
+ * multiple lines
+ */
 
-let a : /* u32 */ = "This is a test";
+let a := 1; // This is a single line comment
+
+let inline : /* u32 */ = 1; // This is an inline comment commenting out the type

@@ -1,0 +1,7 @@
+/* 
+ * Examples: Invalid Escape Sequence
+ *
+ * This example shows an invalid escape sequence in Penguin.
+ */
+
+let escaped : int = "This is a string with an invalid escape sequence: \x";

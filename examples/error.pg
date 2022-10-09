@@ -1,3 +1,0 @@
-// Since this doesn't have an ending quote, it's not a valid string
-// and the lexer will throw an UnexpectedEOF error.
-let thisshoulderror = "Oh no the string is missing an ending quote!

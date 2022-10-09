@@ -1,0 +1,7 @@
+/* 
+ * Examples: Unexpected character
+ *
+ * This example shows an unexpected character error in Penguin.
+ */
+
+let @ := 21;

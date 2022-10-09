@@ -1,1 +1,38 @@
-1+2-3*4/5%6+=7-=8*=9/=10%=
+/* 
+ * Examples: Arithmetic
+ *
+ * This example shows how to use the arithmetic operators in Penguin.
+ *
+ * TODO: Types of the variables are not checked. Update when the type system is
+ * implemented.
+ */
+
+// Addition
+let addition : int = 5 + 6;
+
+// Subtraction
+let subtraction : int = 15 - 23;
+
+// Multiplication
+let multiplication : int = 5 * 6;
+
+// Division
+let division : float = 5 / 6;
+
+// Modulo
+let modulo : int = 5 % 9;
+
+// Short-hand addition
+addition += 6;
+
+// Short-hand subtraction
+= subtraction -= 6;
+
+// Short-hand multiplication
+multiplication *= 6;
+
+// Short-hand division
+division /= 6;
+
+// Short-hand modulo
+modulo %= 2;

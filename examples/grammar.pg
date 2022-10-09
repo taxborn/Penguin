@@ -1,3 +1,10 @@
+/* 
+ * Examples: Grammar
+ *
+ * This example intends to show an example program in Penguin, utilizing most
+ * of the keywords and just to kind of get a feel for the language.
+ */
+
 import "std.print";
 
 // main is implicitly typed as 'u32', because it returns the exit code
@@ -6,6 +13,8 @@ func main() := {
     b : u32 = 35;
 
     c := bar(a, b);
+
+    // return 1; // sets the exit code to 1
 };
 // Functions will end with a semicolon
 
