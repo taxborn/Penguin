@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 use clap::Parser;
 use lexer::Lexer;
-use std::fs;
 use std::path::PathBuf;
 use std::time;
 
@@ -29,8 +28,8 @@ fn main() {
     let args = Args::parse();
     let file = args.file;
 
-    let contents = fs::read_to_string(&file).unwrap();
-    let mut lexer = Lexer::new(contents);
+    let mut lexer = Lexer::new(file);
+
     let start = time::Instant::now();
     let tokens = lexer.lex();
     let end = start.elapsed();
@@ -43,14 +42,15 @@ fn main() {
 
             if args.time {
                 let chars_per_second = ((lexer.loc.index as f64) / (end.as_secs_f64())) as usize;
+
                 println!(
-                    "Time: {:?} microseconds, or a speed of {} chars per second.",
+                    "Lexing took: {:?} microseconds\n\t -> or {} chars per second.",
                     end.as_micros(),
                     chars_per_second
                 );
             }
 
-            println!("Sucessfully compiled.");
+            println!("[✔] Sucessfully compiled.");
         }
         Err(error) => {
             println!("[LEXER ERROR]: {}", error);

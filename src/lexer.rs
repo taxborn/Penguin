@@ -1,53 +1,59 @@
 use std::fmt;
+use std::fs;
+use std::path::PathBuf;
 
 /// A position type to keep track of where we are in the source code.
 type Position = (usize, usize);
 
 #[derive(Debug)]
 /// Errors that can occur during lexing.
-pub enum LexerError {
+pub enum LexerError<'error> {
     /// An invalid character was encountered.
-    InvalidCharacter(Position, char),
+    InvalidCharacter(&'error Location, char),
     /// An invalid identifier was encountered.
-    InvalidIdentifier(Position, String),
+    InvalidIdentifier(&'error Location, String),
     /// An invalid escape sequence was encountered.
-    InvalidEscapeSequence(Position, char),
+    InvalidEscapeSequence(&'error Location, char),
     /// Unexpected end of input.
-    UnexpectedEOF(Position),
+    UnexpectedEOF(&'error Location),
 }
 
-impl fmt::Display for LexerError {
+impl<'error> fmt::Display for LexerError<'error> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            LexerError::InvalidCharacter((line, col), c) => {
+            LexerError::InvalidCharacter(loc, c) => {
                 write!(
                     f,
-                    "Invalid character '{}' at line {}, column {}",
-                    c, line, col
+                    "[{}:{}:{}] Invalid character '{}'.",
+                    loc.source, loc.line, loc.column, c
                 )
             }
-            LexerError::InvalidIdentifier((line, col), s) => {
+            LexerError::InvalidIdentifier(loc, s) => {
                 write!(
                     f,
-                    "Invalid identifier '{}' at line {}, column {}",
-                    s, line, col
+                    "[{}:{}:{}] Invalid identifier '{}'.",
+                    loc.source, loc.line, loc.column, s
                 )
             }
-            LexerError::InvalidEscapeSequence((line, col), c) => {
+            LexerError::InvalidEscapeSequence(loc, c) => {
                 write!(
                     f,
-                    "Invalid escape sequence '{}' at line {}, column {}",
-                    c, line, col
+                    "[{}:{}:{}] Invalid escape sequence '{}'.",
+                    loc.source, loc.line, loc.column, c
                 )
             }
-            LexerError::UnexpectedEOF((line, col)) => {
-                write!(f, "Unexpected end of file at line {}, column {}", line, col)
+            LexerError::UnexpectedEOF(loc) => {
+                write!(
+                    f,
+                    "[{}:{}:{}] Unexpected end of file.",
+                    loc.source, loc.line, loc.column
+                )
             }
         }
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 /// A token is a single lexical unit of the language.
 pub enum TokenKind {
     /// A semicolon (:), typically followed by a type or equal sign
@@ -130,7 +136,7 @@ pub enum TokenKind {
     Import, // import
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Token {
     // The kind of token
     pub kind: TokenKind,
@@ -154,10 +160,11 @@ pub struct Location {
     pub index: usize,
     pub prev_line_length: usize,
     pub current_line_length: usize,
+    pub source: String,
 }
 
 impl Location {
-    pub fn new(line: usize, column: usize) -> Self {
+    pub fn new(line: usize, column: usize, source: String) -> Self {
         Self {
             line,
             column,
@@ -167,9 +174,7 @@ impl Location {
             // the previous line
             prev_line_length: 0,
             current_line_length: 0,
-            // TODO add a `source` field that points to the source file. This
-            // would require the lexer to be passed a reference to the source
-            // file.
+            source,
         }
     }
 
@@ -211,18 +216,29 @@ impl Location {
 
 #[derive(Debug)]
 pub struct Lexer {
-    source: Vec<char>,
     pub loc: Location,
+    source: Vec<char>,
     current: Option<char>,
 }
 
 impl Lexer {
     /// Create a new lexer from a string.
-    pub fn new(contents: String) -> Self {
+    pub fn new(file: PathBuf) -> Self {
+        let source = fs::read_to_string(&file).unwrap().chars().collect();
+        let file_name = file.file_name().unwrap().to_str().unwrap().to_string();
+
         Self {
-            source: contents.chars().collect(),
+            source,
             current: None,
-            loc: Location::new(1, 0),
+            loc: Location::new(1, 0, file_name),
+        }
+    }
+
+    pub fn lex_from_string(source: String) -> Self {
+        Self {
+            source: source.chars().collect(),
+            current: None,
+            loc: Location::new(1, 0, "string".to_string()),
         }
     }
 
@@ -313,8 +329,7 @@ impl Lexer {
                                         self.next();
 
                                         return Err(LexerError::InvalidEscapeSequence(
-                                            self.loc.current_location(),
-                                            next,
+                                            &self.loc, next,
                                         ));
                                     }
                                 }
@@ -328,7 +343,7 @@ impl Lexer {
 
                     // If we didn't find the end of the string, return an error
                     if !found_close {
-                        return Err(LexerError::UnexpectedEOF(self.loc.current_location()));
+                        return Err(LexerError::UnexpectedEOF(&self.loc));
                     }
 
                     tokens.push(Token::new(TokenKind::String, buffer));
@@ -387,7 +402,7 @@ impl Lexer {
 
                     // Check if the next character is an equals sign, if so,
                     // this is a short increment
-                    while let Some(next) = self.current_char() {
+                    if let Some(next) = self.current_char() {
                         if next == '=' {
                             tokens.push(Token::new(TokenKind::ShortIncrement, "+=".to_string()));
                         } else {
@@ -398,8 +413,6 @@ impl Lexer {
 
                             tokens.push(Token::new(TokenKind::Plus, current.to_string()));
                         }
-
-                        break;
                     }
 
                     self.next();
@@ -409,7 +422,7 @@ impl Lexer {
 
                     // Check if the next character is an equals sign, if so,
                     // this is a short decrement
-                    while let Some(next) = self.current_char() {
+                    if let Some(next) = self.current_char() {
                         if next == '=' {
                             tokens.push(Token::new(TokenKind::ShortDecrement, "-=".to_string()));
                         } else {
@@ -420,8 +433,6 @@ impl Lexer {
 
                             tokens.push(Token::new(TokenKind::Minus, current.to_string()));
                         }
-
-                        break;
                     }
 
                     self.next();
@@ -431,7 +442,7 @@ impl Lexer {
 
                     // Check if the next character is an equals sign, if so,
                     // this is a short multiply
-                    while let Some(next) = self.current_char() {
+                    if let Some(next) = self.current_char() {
                         if next == '=' {
                             tokens.push(Token::new(TokenKind::ShortMultiply, "*=".to_string()));
                         } else {
@@ -442,8 +453,6 @@ impl Lexer {
 
                             tokens.push(Token::new(TokenKind::Multiply, current.to_string()));
                         }
-
-                        break;
                     }
 
                     self.next();
@@ -453,7 +462,7 @@ impl Lexer {
 
                     // Check if the next character is an modulo, if so,
                     // this is a short modulo
-                    while let Some(next) = self.current_char() {
+                    if let Some(next) = self.current_char() {
                         if next == '=' {
                             tokens.push(Token::new(TokenKind::ShortModulo, "%=".to_string()));
                         } else {
@@ -464,8 +473,6 @@ impl Lexer {
 
                             tokens.push(Token::new(TokenKind::Modulo, current.to_string()));
                         }
-
-                        break;
                     }
 
                     self.next();
@@ -509,7 +516,7 @@ impl Lexer {
                             }
 
                             if !found_close {
-                                return Err(LexerError::UnexpectedEOF(self.loc.current_location()));
+                                return Err(LexerError::UnexpectedEOF(&self.loc));
                             }
                         } else if next == '=' {
                             tokens.push(Token::new(TokenKind::ShortDivide, "/=".to_string()));
@@ -568,10 +575,7 @@ impl Lexer {
                 _ => {
                     self.next();
 
-                    return Err(LexerError::InvalidCharacter(
-                        self.loc.current_location(),
-                        current,
-                    ));
+                    return Err(LexerError::InvalidCharacter(&self.loc, current));
                 }
             }
         }
