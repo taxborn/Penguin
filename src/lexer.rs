@@ -184,6 +184,7 @@ impl Location {
                 self.column += 1;
                 self.current_line_length += 1;
             }
+
             self.index += 1;
         }
     }
@@ -211,7 +212,7 @@ impl Location {
 #[derive(Debug)]
 pub struct Lexer {
     source: Vec<char>,
-    loc: Location,
+    pub loc: Location,
     current: Option<char>,
 }
 
