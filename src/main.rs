@@ -44,9 +44,8 @@ fn main() {
                 let chars_per_second = ((lexer.loc.index as f64) / (end.as_secs_f64())) as usize;
 
                 println!(
-                    "Lexing took: {:?} microseconds\n\t -> or {} chars per second.",
-                    end.as_micros(),
-                    chars_per_second
+                    "Lexing took: {:?}\n\t -> or {} chars per second.",
+                    end, chars_per_second
                 );
             }
 

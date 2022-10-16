@@ -248,13 +248,14 @@ impl Lexer {
 
         // While we are not at the end of the contents
         while self.source.len() > self.loc.index {
-            let current = if let Some(current) = self.current_char() {
-                self.current = Some(current);
-                current
-            } else {
-                // Reached the end of the file
+            // Check if there is no current character, if so, we are at the end
+            // of the file and we should break out of the loop
+            if self.current_char().is_none() {
                 break;
-            };
+            }
+
+            self.current = self.current_char();
+            let current = self.current.unwrap();
 
             match current {
                 ':' => {
@@ -493,7 +494,6 @@ impl Lexer {
                         } else if next == '*' {
                             // This is a multi-line comment, skip until the end
                             let mut found_close = false;
-
                             // Check if there is a closing comment tag,
                             // if so, break out of the loop.
                             //
